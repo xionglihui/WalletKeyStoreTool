@@ -35,7 +35,8 @@ public static String createWalletKeyPairStr() {
             WalletFile walletFile = objectMapper.readValue(keystore, WalletFile.class);
             credentials = Credentials.create(Wallet.decrypt(pwd, walletFile));
             keypair = credentials.getEcKeyPair();
-            privateKey = Numeric.toHexStringNoPrefixZeroPadded(keypair.getPrivateKey(), Keys.PRIVATE_KEY_LENGTH_IN_HEX);
+            privateKey = Numeric.toHexStringNoPrefixZeroPadded(keypair.getPrivateKey()
+            , Keys.PRIVATE_KEY_LENGTH_IN_HEX);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (CipherException e) {
