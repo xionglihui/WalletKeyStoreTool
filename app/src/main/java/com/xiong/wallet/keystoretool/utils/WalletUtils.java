@@ -20,23 +20,24 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+import static org.web3j.crypto.Hash.sha256;
+
+
 /**
  * Created by xionglh on 2018/8/20
  */
 public class WalletUtils {
 
     private static final SecureRandom secureRandom = SecureRandomUtils.secureRandom();
-    private static final String ETH_JAXX_TYPE = "m/44'/60'/0'/0/0";
     private static final int PUBLIC_KEY_SIZE = 64;
     private static final int PUBLIC_KEY_LENGTH_IN_HEX = PUBLIC_KEY_SIZE << 1;
     private static ObjectMapper objectMapper = ObjectMapperFactory.getObjectMapper();
 
     private static WalletKeyPair createWalletKeyPair() {
         WalletKeyPair walletKeyPair = new WalletKeyPair();
-        String[] pathArray = ETH_JAXX_TYPE.split("/");
         long creationTimeSeconds = System.currentTimeMillis() / 1000;
         DeterministicSeed ds = new DeterministicSeed(secureRandom, 128, "", creationTimeSeconds);
-        ECKeyPair ecKeyPair = getECKeyPair(ds, pathArray);
+        ECKeyPair ecKeyPair = getECKeyPair(ds);
         BigInteger publicKey = ecKeyPair.getPublicKey();
         String publicKeyStr = Numeric.toHexStringWithPrefixZeroPadded(publicKey, PUBLIC_KEY_LENGTH_IN_HEX);
         BigInteger privateKey = ecKeyPair.getPrivateKey();
@@ -46,24 +47,9 @@ public class WalletUtils {
         return walletKeyPair;
     }
 
-    private static ECKeyPair getECKeyPair(DeterministicSeed ds, String[] pathArray) {
+    private static ECKeyPair getECKeyPair(DeterministicSeed ds) {
         byte[] seedBytes = ds.getSeedBytes();
-        if (seedBytes == null)
-            return null;
-        DeterministicKey dkKey = HDKeyDerivation.createMasterPrivateKey(seedBytes);
-        for (int i = 1; i < pathArray.length; i++) {
-            ChildNumber childNumber;
-            if (pathArray[i].endsWith("'")) {
-                int number = Integer.parseInt(pathArray[i].substring(0,
-                        pathArray[i].length() - 1));
-                childNumber = new ChildNumber(number, true);
-            } else {
-                int number = Integer.parseInt(pathArray[i]);
-                childNumber = new ChildNumber(number, false);
-            }
-            dkKey = HDKeyDerivation.deriveChildKey(dkKey, childNumber);
-        }
-        return ECKeyPair.create(dkKey.getPrivKeyBytes());
+        return ECKeyPair.create(sha256(seedBytes));
     }
 
 
